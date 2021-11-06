@@ -22,6 +22,7 @@ class UserLoad(Thread):
         while True:
             try:
                 route, user_ = self._queue.get(timeout=1)
+                print(route, user_)
                 response = requests.put(route, json={'username': user_})
                 if response.status_code != 200:
                     self.exception_happened = True
@@ -42,6 +43,7 @@ class RoomLoad(Thread):
         while True:
             try:
                 route, name_, users_ = self._queue.get(timeout=1)
+                print(route, name_, users_)
                 response = requests.put(route, json={'name': name_, 'members': users_})
                 if response.status_code != 200:
                     self.exception_happened = True
@@ -69,7 +71,6 @@ def _perform_load(queue_: Queue, worker_class, worker_amount: int = 30):
         if worker.exception_happened:
             raise Exception('Error loading!')
     return workers
-
 
 def _setup_test(
         environment, create_indices: bool, message_base_route: str, write_concern_majority: bool
@@ -108,6 +109,8 @@ def _setup_test(
             if line.strip():
                 users = [u.strip() for u in line.split(',')]
                 queue.put((f'{environment.host}/rooms', f'Test room {i}', users))
+                i += 1
+
     workers = _perform_load(queue_=queue, worker_class=RoomLoad)
     print('Created rooms')
 
